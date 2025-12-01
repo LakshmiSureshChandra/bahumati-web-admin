@@ -1,0 +1,120 @@
+.container {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-main);
+}
+
+.searchCard {
+    margin-bottom: 2rem;
+}
+
+.searchForm {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.searchForm>div {
+    flex: 1;
+}
+
+.profileCard {
+    margin-bottom: 2rem;
+}
+
+.profileHeader {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profileInfo {
+    flex: 1;
+}
+
+.profileInfo h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.profileInfo p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.badges {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.balanceInfo {
+    display: flex;
+    gap: 2rem;
+    text-align: right;
+}
+
+.balanceItem {
+    display: flex;
+    flex-direction: column;
+}
+
+.balanceItem label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.balanceItem span {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab {
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: var(--primary);
+}
+
+.activeTab {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}

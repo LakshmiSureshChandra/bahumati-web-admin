@@ -1,0 +1,21 @@
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.mainWrapper {
+    flex: 1;
+    margin-left: 260px;
+    /* Width of sidebar */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Prevent flex child overflow */
+}
+
+.content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    background-color: var(--bg-body);
+}

@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.title {}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.infoItem label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.infoItem div {
+    font-size: 1rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.amount {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: var(--primary) !important;
+}
+
+.processCard {
+    padding: 1.5rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.uploadSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.uploadLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.uploadBox {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.uploadBox:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: var(--primary-light);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.completedInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.proofPreview img {
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}

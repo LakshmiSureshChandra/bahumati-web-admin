@@ -1,0 +1,61 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-body);
+    padding: 1rem;
+}
+
+.loginCard {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem !important;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.logoImage {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--spacing-md);
+    object-fit: contain;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.submitButton {
+    margin-top: 0.5rem;
+}
+
+.footer {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.note {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}

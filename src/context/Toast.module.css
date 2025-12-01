@@ -1,0 +1,91 @@
+.toastContainer {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 100;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    box-shadow: var(--shadow-lg);
+    min-width: 300px;
+    max-width: 400px;
+    animation: slideIn 0.3s ease-out;
+    border-left: 4px solid transparent;
+}
+
+.success {
+    border-left-color: var(--success);
+}
+
+.error {
+    border-left-color: var(--danger);
+}
+
+.warning {
+    border-left-color: var(--warning);
+}
+
+.info {
+    border-left-color: var(--info);
+}
+
+.icon {
+    margin-right: 0.75rem;
+    display: flex;
+}
+
+.success .icon {
+    color: var(--success);
+}
+
+.error .icon {
+    color: var(--danger);
+}
+
+.warning .icon {
+    color: var(--warning);
+}
+
+.info .icon {
+    color: var(--info);
+}
+
+.message {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--text-main);
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+    display: flex;
+}
+
+.closeButton:hover {
+    color: var(--text-main);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

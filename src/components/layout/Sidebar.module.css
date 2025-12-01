@@ -1,0 +1,88 @@
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 20;
+}
+
+.logo {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.logoImage {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    margin-right: 0.75rem;
+}
+
+.logoText {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.nav {
+    flex: 1;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.navItem:hover {
+    background-color: var(--bg-body);
+    color: var(--text-main);
+}
+
+.active {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.active:hover {
+    background-color: var(--primary-light);
+}
+
+.icon {
+    margin-right: 0.75rem;
+    display: flex;
+}
+
+.label {
+    font-size: 0.875rem;
+}
+
+.footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.userRole {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
