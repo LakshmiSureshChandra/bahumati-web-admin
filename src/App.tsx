@@ -8,7 +8,6 @@ import { OnboardingDashboard } from './pages/onboarding/Dashboard';
 import { KYCQueue } from './pages/onboarding/KYCQueue';
 import { KYCReview } from './pages/onboarding/KYCReview';
 import { CreateUser } from './pages/onboarding/CreateUser';
-import { UserList } from './pages/onboarding/UserList';
 import { ReconciliationDashboard } from './pages/reconciliation/Dashboard';
 import { TransactionsList } from './pages/reconciliation/TransactionsList';
 import { TransactionDetail } from './pages/reconciliation/TransactionDetail';
@@ -18,7 +17,7 @@ import { WithdrawRequestsQueue } from './pages/reconciliation/WithdrawRequestsQu
 import { WithdrawRequestDetail } from './pages/reconciliation/WithdrawRequestDetail';
 import { UserHistory } from './pages/reconciliation/UserHistory';
 import { GlobalDashboard } from './pages/admin/Dashboard';
-import { AdsList } from './pages/admin/AdsList';
+
 import { AgentsList } from './pages/admin/AgentsList';
 import { ConfigPage } from './pages/admin/ConfigPage';
 
@@ -72,14 +71,17 @@ const AppRoutes: React.FC = () => {
         <Route element={<RoleGuard allowedRoles={['OnboardingAgent', 'SuperAdmin']}><Outlet /></RoleGuard>}>
           <Route path="kyc-queue" element={<KYCQueue />} />
           <Route path="kyc-review/:userId" element={<KYCReview />} />
-          <Route path="users" element={<UserList />} />
           <Route path="users/new" element={<CreateUser />} />
+        </Route>
 
+        {/* Shared Routes for Onboarding, Reconciliation & Super Admin */}
+        <Route element={<RoleGuard allowedRoles={['OnboardingAgent', 'ReconciliationAgent', 'SuperAdmin']}><Outlet /></RoleGuard>}>
+          <Route path="users" element={<UserHistory />} />
         </Route>
 
         {/* Protected Routes for Reconciliation Agent & Super Admin */}
         <Route element={<RoleGuard allowedRoles={['ReconciliationAgent', 'SuperAdmin']}><Outlet /></RoleGuard>}>
-          <Route path="user-history" element={<UserHistory />} />
+          {/* Other reconciliation routes if any specific ones remain */}
         </Route>
 
         <Route path="transactions" element={<TransactionsList />} />
@@ -89,7 +91,7 @@ const AppRoutes: React.FC = () => {
         <Route path="withdrawals" element={<WithdrawRequestsQueue />} />
         <Route path="withdrawals/:requestId" element={<WithdrawRequestDetail />} />
 
-        <Route path="ads" element={<AdsList />} />
+
         <Route path="agents" element={<AgentsList />} />
         <Route path="config" element={<ConfigPage />} />
       </Route>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X as XIcon, FileText } from 'lucide-react';
+import { ArrowLeft, Check, X as XIcon } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
@@ -30,7 +30,21 @@ export const KYCReview: React.FC = () => {
             const kycData = await userService.getKycDetails(userId);
 
             if (userData) setUser(userData);
-            if (kycData) setKycDetails(kycData);
+            if (kycData) {
+                // Resolve presigned URLs for images
+                const [frontPicUrl, backPicUrl, selfieUrl] = await Promise.all([
+                    userService.getPresignedUrl(kycData.frontPic),
+                    userService.getPresignedUrl(kycData.backPic),
+                    userService.getPresignedUrl(kycData.selfie)
+                ]);
+
+                setKycDetails({
+                    ...kycData,
+                    frontPic: frontPicUrl || kycData.frontPic,
+                    backPic: backPicUrl || kycData.backPic,
+                    selfie: selfieUrl || kycData.selfie
+                });
+            }
             setIsLoading(false);
         };
 
@@ -84,8 +98,12 @@ export const KYCReview: React.FC = () => {
                                 <div>{user.name}</div>
                             </div>
                             <div className={styles.infoItem}>
-                                <label>Email</label>
-                                <div>{user.email}</div>
+                                <label>Gender</label>
+                                <div style={{ textTransform: 'capitalize' }}>{user.gender || '-'}</div>
+                            </div>
+                            <div className={styles.infoItem}>
+                                <label>Birth Date</label>
+                                <div>{user.birthDate ? new Date(user.birthDate).toLocaleDateString() : '-'}</div>
                             </div>
                             <div className={styles.infoItem}>
                                 <label>Phone</label>
@@ -93,57 +111,63 @@ export const KYCReview: React.FC = () => {
                             </div>
                             <div className={styles.infoItem}>
                                 <label>Status</label>
-                                <Badge variant={user.kycStatus === 'Approved' ? 'success' : user.kycStatus === 'Rejected' ? 'danger' : 'warning'}>
-                                    {user.kycStatus}
+                                <Badge variant={(kycDetails?.status || user.kycStatus) === 'Approved' ? 'success' : (kycDetails?.status || user.kycStatus) === 'Rejected' ? 'danger' : 'warning'}>
+                                    {kycDetails?.status || user.kycStatus}
                                 </Badge>
                             </div>
                         </div>
                     </Card>
 
                     <Card title="KYC Details" className={styles.kycCard}>
-                        {kycDetails ? (
-                            <div className={styles.infoGrid}>
-                                <div className={styles.infoItem}>
-                                    <label>ID Type</label>
-                                    <div>{kycDetails.governmentIdType}</div>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>ID Number</label>
-                                    <div>{kycDetails.governmentIdNumber}</div>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Address Proof</label>
-                                    <div>{kycDetails.addressProof}</div>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Submitted At</label>
-                                    <div>{new Date(kycDetails.submittedAt).toLocaleString()}</div>
-                                </div>
+                        <div className={styles.infoGrid}>
+                            <div className={styles.infoItem}>
+                                <label>ID Type</label>
+                                <div style={{ textTransform: 'capitalize' }}>{kycDetails?.idType?.replace('_', ' ') || '-'}</div>
                             </div>
-                        ) : (
-                            <div className={styles.emptyState}>No KYC details submitted yet.</div>
-                        )}
+                            <div className={styles.infoItem}>
+                                <label>Submitted At</label>
+                                <div>{kycDetails?.submittedAt ? new Date(kycDetails.submittedAt).toLocaleString() : '-'}</div>
+                            </div>
+                        </div>
                     </Card>
                 </div>
 
                 <div className={styles.rightColumn}>
-                    <Card title="Documents">
-                        {kycDetails?.documents && kycDetails.documents.length > 0 ? (
-                            <div className={styles.documentsGrid}>
-                                {kycDetails.documents.map((doc, index) => (
-                                    <div key={index} className={styles.documentItem}>
-                                        <div className={styles.documentPreview}>
-                                            <FileText size={32} />
-                                        </div>
-                                        <a href={doc} target="_blank" rel="noreferrer" className={styles.documentLink}>
-                                            View Document {index + 1}
-                                        </a>
+                    <Card title="Documents & Photos">
+                        <div className={styles.documentsGrid}>
+                            <div className={styles.documentItem}>
+                                <label>Front Picture</label>
+                                {kycDetails?.frontPic ? (
+                                    <div className={styles.imagePreview}>
+                                        <img src={kycDetails.frontPic} alt="Front Pic" />
                                     </div>
-                                ))}
+                                ) : (
+                                    <div className={styles.emptyState}>No Front Pic</div>
+                                )}
                             </div>
-                        ) : (
-                            <div className={styles.emptyState}>No documents uploaded.</div>
-                        )}
+
+                            <div className={styles.documentItem}>
+                                <label>Back Picture</label>
+                                {kycDetails?.backPic ? (
+                                    <div className={styles.imagePreview}>
+                                        <img src={kycDetails.backPic} alt="Back Pic" />
+                                    </div>
+                                ) : (
+                                    <div className={styles.emptyState}>No Back Pic</div>
+                                )}
+                            </div>
+
+                            <div className={styles.documentItem}>
+                                <label>Selfie</label>
+                                {kycDetails?.selfie ? (
+                                    <div className={styles.imagePreview}>
+                                        <img src={kycDetails.selfie} alt="Selfie" />
+                                    </div>
+                                ) : (
+                                    <div className={styles.emptyState}>No Selfie</div>
+                                )}
+                            </div>
+                        </div>
                     </Card>
                 </div>
             </div>

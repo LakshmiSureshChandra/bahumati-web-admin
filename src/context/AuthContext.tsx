@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Agent, Role } from '../types';
+import type { Agent } from '../types';
 import { authService } from '../services/authService';
 
 interface AuthContextType {
     user: Agent | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (role: Role) => Promise<void>;
+    login: (username: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -33,10 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initAuth();
     }, []);
 
-    const login = async (role: Role) => {
+    const login = async (username: string, password: string) => {
         setIsLoading(true);
         try {
-            const agent = await authService.login(role);
+            const agent = await authService.login(username, password);
             setUser(agent);
         } finally {
             setIsLoading(false);

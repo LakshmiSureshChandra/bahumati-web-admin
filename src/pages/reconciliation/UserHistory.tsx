@@ -1,96 +1,159 @@
-import React, { useState } from 'react';
-import { Search, User as UserIcon, Calendar, ArrowRightLeft, Wallet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, User as UserIcon, Calendar, ArrowRightLeft, Wallet, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { Table, type Column } from '../../components/common/Table';
 import { Badge } from '../../components/common/Badge';
 import { userService } from '../../services/userService';
-import { transactionService } from '../../services/transactionService';
-import { eventService } from '../../services/eventService';
-import { withdrawService } from '../../services/withdrawService';
-import type { User, Transaction, Event, WithdrawRequest } from '../../types';
+import type { User, UserHistoryResponse, HistoryTransaction, HistoryEvent, HistoryWithdrawal } from '../../types';
 import styles from './UserHistory.module.css';
 
+import { useToast } from '../../context/ToastContext';
+
 export const UserHistory: React.FC = () => {
+    const navigate = useNavigate();
+    const { showToast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
-    const [user, setUser] = useState<User | null>(null);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [events, setEvents] = useState<Event[]>([]);
-    const [withdrawals, setWithdrawals] = useState<WithdrawRequest[]>([]);
+    const [userList, setUserList] = useState<User[]>([]);
+    const [historyData, setHistoryData] = useState<UserHistoryResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'transactions' | 'events' | 'withdrawals'>('transactions');
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!searchQuery.trim()) return;
+    useEffect(() => {
+        fetchInitialUsers();
+    }, []);
 
+    const fetchInitialUsers = async () => {
         setIsLoading(true);
-        setUser(null);
-
         try {
-            const allUsers = await userService.getUsers();
-            // Search by ID, Phone, or Email
-            const foundUser = allUsers.find(u =>
-                u.id === searchQuery ||
-                u.phone.includes(searchQuery) ||
-                u.email.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-
-            if (foundUser) {
-                setUser(foundUser);
-
-                // Fetch related data
-                const [allTx, allEvents, allWr] = await Promise.all([
-                    transactionService.getTransactions(),
-                    eventService.getEvents(),
-                    withdrawService.getWithdrawRequests()
-                ]);
-
-                setTransactions(allTx.filter(t => t.userId === foundUser.id));
-                // For events, we assume participation if there's a transaction related to it or just show all for now as mock
-                // In a real app, we'd have a participation table. Here we'll just show active events for context or filter if possible.
-                // Since we don't have direct participation link in mock, we'll filter transactions with eventId to find events.
-                const participatedEventIds = new Set(allTx.filter(t => t.userId === foundUser.id && t.eventId).map(t => t.eventId));
-                setEvents(allEvents.filter(e => participatedEventIds.has(e.id)));
-
-                setWithdrawals(allWr.filter(w => w.userId === foundUser.id));
-            }
+            const result = await userService.getUsersPaginated(1, 10);
+            setUserList(result.users);
         } catch (error) {
-            console.error('Error fetching user history:', error);
+            console.error('Error fetching users:', error);
+            showToast('Failed to fetch users', 'error');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const transactionColumns: Column<Transaction>[] = [
-        { header: 'Date', cell: (tx) => new Date(tx.createdAt).toLocaleDateString() },
-        { header: 'Type', accessorKey: 'type' },
-        { header: 'Amount', cell: (tx) => `₹${tx.amount.toLocaleString('en-IN')}` },
-        { header: 'Status', cell: (tx) => <Badge variant={tx.status === 'Completed' ? 'success' : 'warning'}>{tx.status}</Badge> },
+    const handleSearch = async (e?: React.FormEvent, userId?: string) => {
+        if (e) e.preventDefault();
+        const query = userId || searchQuery;
+
+        if (!query.trim()) {
+            setHistoryData(null);
+            fetchInitialUsers();
+            return;
+        }
+
+        setIsLoading(true);
+        setHistoryData(null);
+
+        try {
+            // First find the user to get the ID if we searched by phone
+            let targetUserId = userId;
+            if (!targetUserId) {
+                const foundUser = await userService.findUser(query);
+                if (foundUser) {
+                    targetUserId = foundUser.id;
+                } else {
+                    showToast('User not found', 'error');
+                }
+            }
+
+            if (targetUserId) {
+                const history = await userService.getUserHistory(targetUserId);
+                if (history) {
+                    setHistoryData(history);
+                } else {
+                    showToast('Failed to fetch user history', 'error');
+                }
+            } else {
+                // If not found, clear data
+                setHistoryData(null);
+            }
+        } catch (error) {
+            console.error('Error fetching user history:', error);
+            showToast('An error occurred while fetching history', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const userListColumns: Column<User>[] = [
+        { header: 'Name', accessorKey: 'name' },
+        { header: 'Phone', accessorKey: 'phone' },
+        { header: 'KYC Status', cell: (u) => <Badge variant={u.kycStatus === 'Approved' ? 'success' : 'warning'}>{u.kycStatus}</Badge> },
+        {
+            header: 'Actions',
+            cell: (u) => (
+                <Button size="sm" variant="outline" onClick={() => {
+                    setSearchQuery(u.phone || u.id);
+                    handleSearch(undefined, u.id);
+                }}>
+                    View History
+                </Button>
+            )
+        }
     ];
 
-    const eventColumns: Column<Event>[] = [
-        { header: 'Event Name', accessorKey: 'name' },
-        { header: 'Status', cell: (evt) => <Badge variant={evt.status === 'Ongoing' ? 'success' : 'neutral'}>{evt.status}</Badge> },
-        { header: 'Start Date', cell: (evt) => new Date(evt.startDate).toLocaleDateString() },
+    const transactionColumns: Column<HistoryTransaction>[] = [
+        {
+            header: 'Date',
+            cell: (tx) => new Date(tx.createdAt || tx.allocatedAt || '').toLocaleDateString()
+        },
+        {
+            header: 'Type',
+            cell: (tx) => (
+                <div style={{ textTransform: 'capitalize' }}>
+                    {tx.type.replace('_', ' ')}
+                </div>
+            )
+        },
+        {
+            header: 'Amount',
+            cell: (tx) => `₹${tx.amount.toLocaleString('en-IN')}`
+        },
+        {
+            header: 'Details',
+            cell: (tx) => {
+                if (tx.type === 'gift_sent' && tx.receiver) return `To: ${tx.receiver.name}`;
+                if (tx.type === 'gift_received' && tx.sender) return `From: ${tx.sender.name}`;
+                if (tx.type === 'allocation') return `${tx.allocationType} (${tx.quantity?.toFixed(3)} units)`;
+                return '-';
+            }
+        },
     ];
 
-    const withdrawalColumns: Column<WithdrawRequest>[] = [
-        { header: 'Date', cell: (wr) => new Date(wr.requestDate).toLocaleDateString() },
-        { header: 'Amount', cell: (wr) => `₹${wr.requestedAmount.toLocaleString('en-IN')}` },
-        { header: 'Status', cell: (wr) => <Badge variant={wr.status === 'Completed' ? 'success' : wr.status === 'Rejected' ? 'danger' : 'warning'}>{wr.status}</Badge> },
+    const eventColumns: Column<HistoryEvent>[] = [
+        { header: 'Event Name', accessorKey: 'title' },
+        { header: 'Status', cell: (evt) => <Badge variant={evt.status === 'active' ? 'success' : evt.status === 'ended' ? 'neutral' : 'danger'}>{evt.status}</Badge> },
+        { header: 'Dates', cell: (evt) => `${new Date(evt.eventStartDate).toLocaleString()} - ${new Date(evt.eventEndDate).toLocaleString()}` },
+        { header: 'Gifts Received', cell: (evt) => evt.stats?.totalGiftsReceived || 0 },
+        { header: 'Total Amount', cell: (evt) => `₹${(evt.stats?.totalGiftsAmount || 0).toLocaleString('en-IN')}` },
+    ];
+
+    const withdrawalColumns: Column<HistoryWithdrawal>[] = [
+        { header: 'Date', cell: (wr) => new Date(wr.createdAt).toLocaleDateString() },
+        { header: 'Amount', cell: (wr) => `₹${wr.amount.toLocaleString('en-IN')}` },
+        { header: 'Event', cell: (wr) => wr.eventId?.title || '-' },
+        { header: 'Status', cell: (wr) => <Badge variant={wr.status === 'approved' ? 'success' : wr.status === 'rejected' ? 'danger' : 'warning'}>{wr.status}</Badge> },
     ];
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>User History Lookup</h1>
+            <div className={styles.header}>
+                <h1 className={styles.title}>Users</h1>
+                <Button onClick={() => navigate('/users/new')}>Create User</Button>
+            </div>
 
             <Card className={styles.searchCard}>
-                <form onSubmit={handleSearch} className={styles.searchForm}>
+                <form onSubmit={(e) => handleSearch(e)} className={styles.searchForm}>
                     <Input
                         label="Search User"
-                        placeholder="Enter User ID, Phone, or Email"
+                        placeholder="Enter User ID or Phone"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         fullWidth
@@ -101,30 +164,75 @@ export const UserHistory: React.FC = () => {
                 </form>
             </Card>
 
-            {user && (
+            {!historyData && (
+                <div className={styles.userList}>
+                    <h2 className={styles.subtitle} style={{ marginBottom: '1rem' }}>Recent Users</h2>
+                    <Table
+                        data={userList}
+                        columns={userListColumns}
+                        keyExtractor={(u) => u.id}
+                        isLoading={isLoading && !historyData}
+                        emptyMessage="No users found."
+                    />
+                </div>
+            )}
+
+            {historyData && (
                 <div className={styles.results}>
+                    <div style={{ marginBottom: '1rem' }}>
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
+                                setHistoryData(null);
+                                setSearchQuery('');
+                                fetchInitialUsers();
+                            }}
+                            leftIcon={<ArrowLeft size={16} />}
+                        >
+                            Back to Users
+                        </Button>
+                    </div>
                     <Card className={styles.profileCard}>
                         <div className={styles.profileHeader}>
                             <div className={styles.avatar}>
-                                <UserIcon size={32} />
+                                {historyData.user.image ? (
+                                    <img src={historyData.user.image} alt={historyData.user.fullName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                ) : (
+                                    <UserIcon size={32} />
+                                )}
                             </div>
                             <div className={styles.profileInfo}>
-                                <h2>{user.name}</h2>
-                                <p>{user.email} • {user.phone}</p>
-                                <div className={styles.badges}>
-                                    <Badge variant={user.kycStatus === 'Approved' ? 'success' : 'warning'}>KYC: {user.kycStatus}</Badge>
-                                    <Badge variant={user.isBanned ? 'danger' : 'success'}>{user.isBanned ? 'Banned' : 'Active'}</Badge>
-                                </div>
+                                <h2>{historyData.user.fullName}</h2>
+                                <p>{historyData.user.number}</p>
                             </div>
                             <div className={styles.balanceInfo}>
                                 <div className={styles.balanceItem}>
-                                    <label>Total Balance</label>
-                                    <span>₹{user.totalBalance.toLocaleString('en-IN')}</span>
+                                    <label>Total Allocated</label>
+                                    <span>₹{(historyData.summary.totalAllocated || 0).toLocaleString('en-IN')}</span>
                                 </div>
                                 <div className={styles.balanceItem}>
-                                    <label>Withdrawable</label>
-                                    <span>₹{user.withdrawableAmount.toLocaleString('en-IN')}</span>
+                                    <label>Total Withdrawn</label>
+                                    <span>₹{(historyData.summary.totalWithdrawn || 0).toLocaleString('en-IN')}</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                            <div className={styles.balanceItem}>
+                                <label>Gifts Sent</label>
+                                <span>{historyData.summary.totalGiftsSent}</span>
+                            </div>
+                            <div className={styles.balanceItem}>
+                                <label>Gifts Received</label>
+                                <span>{historyData.summary.totalGiftsReceived}</span>
+                            </div>
+                            <div className={styles.balanceItem}>
+                                <label>Total Unallocated</label>
+                                <span>₹{(historyData.summary.netBalance || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className={styles.balanceItem}>
+                                <label>Events Created</label>
+                                <span>{historyData.summary.totalEventsCreated}</span>
                             </div>
                         </div>
                     </Card>
@@ -152,13 +260,28 @@ export const UserHistory: React.FC = () => {
 
                     <div className={styles.tabContent}>
                         {activeTab === 'transactions' && (
-                            <Table data={transactions} columns={transactionColumns} keyExtractor={(t) => t.id} emptyMessage="No transactions found" />
+                            <Table
+                                data={historyData.transactions.list}
+                                columns={transactionColumns}
+                                keyExtractor={(t) => t.transactionId || (t.giftId && t.giftId._id) || `${t.type}-${t.createdAt}-${t.amount}`}
+                                emptyMessage="No transactions found"
+                            />
                         )}
                         {activeTab === 'events' && (
-                            <Table data={events} columns={eventColumns} keyExtractor={(e) => e.id} emptyMessage="No event participation found" />
+                            <Table
+                                data={historyData.events.list}
+                                columns={eventColumns}
+                                keyExtractor={(e) => e.id}
+                                emptyMessage="No event participation found"
+                            />
                         )}
                         {activeTab === 'withdrawals' && (
-                            <Table data={withdrawals} columns={withdrawalColumns} keyExtractor={(w) => w.id} emptyMessage="No withdrawal requests found" />
+                            <Table
+                                data={historyData.withdrawals.list}
+                                columns={withdrawalColumns}
+                                keyExtractor={(w) => w._id}
+                                emptyMessage="No withdrawal requests found"
+                            />
                         )}
                     </div>
                 </div>

@@ -8,8 +8,7 @@ import {
     ArrowRightLeft,
     Wallet,
     Settings,
-    Shield,
-    Megaphone
+    Shield
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -35,13 +34,7 @@ export const Sidebar: React.FC = () => {
             label: 'Users',
             path: '/users',
             icon: <Users size={20} />,
-            roles: ['OnboardingAgent', 'SuperAdmin'],
-        },
-        {
-            label: 'User History',
-            path: '/user-history',
-            icon: <Users size={20} />,
-            roles: ['ReconciliationAgent', 'SuperAdmin'],
+            roles: ['OnboardingAgent', 'ReconciliationAgent', 'SuperAdmin'],
         },
         {
             label: 'Events',
@@ -61,12 +54,7 @@ export const Sidebar: React.FC = () => {
             icon: <Wallet size={20} />,
             roles: ['ReconciliationAgent', 'SuperAdmin'],
         },
-        {
-            label: 'Ads',
-            path: '/ads',
-            icon: <Megaphone size={20} />,
-            roles: ['SuperAdmin'],
-        },
+
         {
             label: 'Agents',
             path: '/agents',

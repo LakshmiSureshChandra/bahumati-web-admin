@@ -1,4 +1,4 @@
-export type Role = 'OnboardingAgent' | 'ReconciliationAgent' | 'SuperAdmin';
+export type Role = 'OnboardingAgent' | 'ReconciliationAgent' | 'SuperAdmin' | 'onboarding_agent' | 'reconciliation_agent';
 
 export type KYCStatus = 'Pending' | 'Approved' | 'Rejected';
 export type AllocationType = 'Top 50 Companies' | 'Digital Gold';
@@ -15,6 +15,8 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  gender?: 'male' | 'female' | 'other';
+  birthDate?: string; // ISO Date
   kycStatus: KYCStatus;
   kycLevel?: number;
   createdDate: string; // ISO Date
@@ -34,24 +36,38 @@ export interface User {
 
 export interface KYCDetails {
   userId: string;
-  governmentIdNumber: string;
-  governmentIdType: string;
-  addressProof: string; // URL or description
-  documents: string[]; // URLs
+  idType: 'aadhaar' | 'pan' | 'driving_license' | 'voter_id' | 'passport';
+  frontPic: string;
+  backPic: string;
+  selfie: string;
+  status: KYCStatus;
+  rejectionReason?: string;
   submittedAt: string;
   reviewedBy?: string; // Agent ID
   reviewNotes?: string;
   decisionDate?: string;
+  // Legacy fields kept for compatibility if needed, or removed if strictly following new schema
+  governmentIdNumber?: string;
+  governmentIdType?: string;
+  addressProof?: string;
+  documents?: string[];
 }
 
 export interface Event {
   id: string;
   name: string;
-  organizerUserId: string;
+  creator: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  description?: string;
+  image?: string;
   startDate: string;
   endDate: string;
   status: EventStatus;
   totalCollectedAmount: number;
+  totalWithdrawnAmount: number;
   tPlusXDays: number;
   defaultAllocationType: AllocationType;
   allowedWithdrawPercentage: number; // 0-100
@@ -88,7 +104,8 @@ export interface WithdrawRequest {
 export interface Agent {
   id: string;
   name: string;
-  email: string;
+  username?: string;
+  email?: string; // Made optional as API doesn't seem to require it for creation
   role: Role;
   status: AgentStatus;
   lastActive: string;
@@ -114,4 +131,137 @@ export interface Ad {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+export interface UserHistorySummary {
+  totalGiftsSent: number;
+  totalGiftsReceived: number;
+  totalAllocated: number;
+  totalWithdrawn: number;
+  totalPendingWithdrawals: number;
+  netBalance: number;
+  totalEventsCreated: number;
+  totalEventGiftsAmount: number;
+  totalEventWithdrawals: number;
+}
+
+export interface HistoryTransaction {
+  type: 'gift_received' | 'gift_sent' | 'allocation';
+  transactionId?: string;
+  amount: number;
+  giftType?: 'gold' | 'stock';
+  giftName?: string;
+  quantity?: number;
+  status?: string;
+  isAllotted?: boolean;
+  sender?: {
+    id: string;
+    name: string;
+    image?: string;
+    number: string;
+  };
+  receiver?: {
+    id: string;
+    name: string;
+    image?: string;
+    number: string;
+  };
+  event?: {
+    id: string;
+    title: string;
+    eventLink: string;
+  } | null;
+  createdAt: string; // or allocatedAt
+  allocatedAt?: string;
+  isSelfGift?: boolean;
+  allocationType?: string;
+  pricePerUnit?: number;
+  giftId?: {
+    _id: string;
+    valueInINR: number;
+    type: string;
+    name: string;
+  };
+}
+
+export interface HistoryWithdrawal {
+  _id: string;
+  eventId: {
+    _id: string;
+    title: string;
+    eventLink: string;
+    eventStartDate: string;
+    eventEndDate: string;
+  };
+  userId: string;
+  amount: number;
+  percentage: number;
+  totalGiftsAmount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  moneyState: string;
+  approvedBy?: {
+    _id: string;
+    fullName: string;
+  } | null;
+  approvedAt?: string | null;
+  rejectedBy?: {
+    _id: string;
+    fullName: string;
+  } | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HistoryEvent {
+  id: string;
+  title: string;
+  description: string;
+  image: string | null;
+  eventStartDate: string;
+  eventEndDate: string;
+  eventLink: string;
+  status: 'active' | 'ended' | 'cancelled';
+  withdrawalPercentage: number;
+  stats: {
+    totalGiftsReceived: number;
+    totalGiftsAmount: number;
+    maxWithdrawable: number;
+    totalWithdrawn: number;
+    totalPendingWithdrawals: number;
+    availableForWithdrawal: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserHistoryResponse {
+  user: {
+    id: string;
+    fullName: string;
+    number: string;
+    image: string | null;
+  };
+  summary: UserHistorySummary;
+  transactions: {
+    giftsSent: number;
+    giftsReceived: number;
+    allocations: number;
+    total: number;
+    list: HistoryTransaction[];
+  };
+  withdrawals: {
+    total: number;
+    approved: number;
+    pending: number;
+    rejected: number;
+    list: HistoryWithdrawal[];
+  };
+  events: {
+    total: number;
+    active: number;
+    ended: number;
+    cancelled: number;
+    list: HistoryEvent[];
+  };
 }

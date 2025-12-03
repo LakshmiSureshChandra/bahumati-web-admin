@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import type { Role } from '../../types';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
-import { Select } from '../../components/common/Select';
+import { Input } from '../../components/common/Input';
 import styles from './Login.module.css';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
     const { login, isLoading } = useAuth();
-    const [selectedRole, setSelectedRole] = useState<Role>('OnboardingAgent');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        await login(selectedRole);
-        navigate('/');
+        setError(null);
+        try {
+            await login(username, password);
+            navigate('/');
+        } catch (err: any) {
+            setError(err.message || 'Failed to login');
+        }
     };
-
-    const roleOptions = [
-        { label: 'Onboarding Agent', value: 'OnboardingAgent' },
-        { label: 'Reconciliation Agent', value: 'ReconciliationAgent' },
-        { label: 'Super Admin', value: 'SuperAdmin' },
-    ];
 
     return (
         <div className={styles.container}>
@@ -34,11 +34,29 @@ export const Login: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleLogin} className={styles.form}>
-                    <Select
-                        label="Select Role (Simulation)"
-                        options={roleOptions}
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value as Role)}
+                    {error && (
+                        <div style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <Input
+                        label="Username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Enter your username"
+                        required
+                        fullWidth
+                    />
+
+                    <Input
+                        label="Password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
                         fullWidth
                     />
 
@@ -51,12 +69,6 @@ export const Login: React.FC = () => {
                         Sign In
                     </Button>
                 </form>
-
-                <div className={styles.footer}>
-                    <p className={styles.note}>
-                        Note: This is a demo. No password required.
-                    </p>
-                </div>
             </Card>
         </div>
     );

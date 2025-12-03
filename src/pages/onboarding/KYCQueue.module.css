@@ -1,19 +1,104 @@
 .container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    padding: 2rem;
 }
 
 .header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
 }
 
 .title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.searchBox {
+    flex: 1;
+    min-width: 300px;
+}
+
+.searchContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    border: 2px solid #E5E7EB;
+    /* Thicker border */
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    background-color: var(--bg-surface);
     color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    /* Indigo shadow */
+}
+
+.statusFilters {
+    display: flex;
+    gap: 0.5rem;
+    background-color: #F3F4F6;
+    /* Light gray background for container */
+    padding: 0.375rem;
+    border-radius: 0.75rem;
+    border: 1px solid #E5E7EB;
+}
+
+.filterButton {
+    padding: 0.625rem 1.25rem;
+    border: 1px solid transparent;
+    background: none;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filterButton:hover {
+    color: var(--text-main);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.activeFilter {
+    background-color: var(--bg-surface);
+    color: var(--primary);
+    border-color: #E5E7EB;
+    box-shadow: var(--shadow-sm);
+}
+
+.activeFilter:hover {
+    background-color: var(--bg-surface);
+    color: var(--primary-hover);
 }
 
 .actions {

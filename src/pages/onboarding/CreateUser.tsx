@@ -14,21 +14,68 @@ export const CreateUser: React.FC = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [step, setStep] = useState<'phone' | 'otp' | 'details'>('phone');
 
     const [formData, setFormData] = useState({
         phone: '',
+        otp: '',
         defaultAllocationType: 'Top 50 Companies' as AllocationType,
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const [tempUser, setTempUser] = useState<{ id: string, token: string } | null>(null);
+
+    const handleSendOtp = async () => {
+        if (!formData.phone || formData.phone.length < 10) {
+            showToast('Please enter a valid phone number', 'error');
+            return;
+        }
         setIsLoading(true);
         try {
-            const newUser = await userService.createUser(formData);
-            showToast(`User ${newUser.phone} created successfully`, 'success');
-            navigate(`/kyc-review/${newUser.id}`);
-        } catch (error) {
-            showToast('Failed to create user', 'error');
+            await userService.sendOtp(formData.phone);
+            setStep('otp');
+            showToast(`OTP sent to ${formData.phone}`, 'success');
+        } catch (error: any) {
+            showToast(error.message || 'Failed to send OTP', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (!formData.otp || formData.otp.length !== 4) {
+            showToast('Please enter a valid 4-digit OTP', 'error');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const { user, token } = await userService.verifyOtp(formData.phone, formData.otp);
+            setTempUser({ id: user.id, token });
+            setStep('details');
+            showToast('OTP Verified', 'success');
+        } catch (error: any) {
+            showToast(error.message || 'Failed to verify OTP', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tempUser) {
+            showToast('User session missing. Please try again.', 'error');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await userService.updateUserAllocation(
+                tempUser.id,
+                formData.defaultAllocationType,
+                tempUser.token
+            );
+            showToast(`User created successfully`, 'success');
+            navigate(`/kyc-review/${tempUser.id}`);
+        } catch (error: any) {
+            showToast(error.message || 'Failed to update user allocation', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -44,36 +91,74 @@ export const CreateUser: React.FC = () => {
             </div>
 
             <Card className={styles.formCard}>
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <Input
-                        label="Phone Number"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        required
-                        fullWidth
-                    />
+                <div className={styles.form}>
+                    {step === 'phone' && (
+                        <>
+                            <Input
+                                label="Phone Number"
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                placeholder="Enter mobile number"
+                                fullWidth
+                            />
+                            <Button
+                                onClick={handleSendOtp}
+                                fullWidth
+                                isLoading={isLoading}
+                                className={styles.actionButton}
+                            >
+                                Send OTP
+                            </Button>
+                        </>
+                    )}
 
-                    <Select
-                        label="Default Allocation Type"
-                        options={[
-                            { label: 'Top 50 Companies', value: 'Top 50 Companies' },
-                            { label: 'Digital Gold', value: 'Digital Gold' },
-                        ]}
-                        value={formData.defaultAllocationType}
-                        onChange={(e) => setFormData({ ...formData, defaultAllocationType: e.target.value as AllocationType })}
-                        fullWidth
-                    />
+                    {step === 'otp' && (
+                        <>
+                            <div className={styles.phoneDisplay}>
+                                <span>Sent to: {formData.phone}</span>
+                                <Button variant="ghost" size="sm" onClick={() => setStep('phone')}>Change</Button>
+                            </div>
+                            <Input
+                                label="Enter OTP"
+                                type="text"
+                                value={formData.otp}
+                                onChange={(e) => setFormData({ ...formData, otp: e.target.value })}
+                                placeholder="Enter 4-digit OTP"
+                                fullWidth
+                            />
+                            <Button
+                                onClick={handleVerifyOtp}
+                                fullWidth
+                                isLoading={isLoading}
+                                className={styles.actionButton}
+                            >
+                                Verify OTP
+                            </Button>
+                        </>
+                    )}
 
-                    <div className={styles.formActions}>
-                        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" variant="primary" isLoading={isLoading}>
-                            Create User
-                        </Button>
-                    </div>
-                </form>
+                    {step === 'details' && (
+                        <form onSubmit={handleSubmit}>
+                            <Select
+                                label="Default Allocation Type"
+                                options={[
+                                    { label: 'Top 50 Companies', value: 'Top 50 Companies' },
+                                    { label: 'Digital Gold', value: 'Digital Gold' },
+                                ]}
+                                value={formData.defaultAllocationType}
+                                onChange={(e) => setFormData({ ...formData, defaultAllocationType: e.target.value as AllocationType })}
+                                fullWidth
+                            />
+
+                            <div className={styles.formActions}>
+                                <Button type="submit" variant="primary" fullWidth isLoading={isLoading}>
+                                    Create User
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+                </div>
             </Card>
         </div>
     );
